@@ -12,8 +12,8 @@ The bootcamp aims to provide participants with:
 
 | No | Topic |
 | -- | -- |
-| 01 | Batch ingestion |
-| 02 | Delta lake |
+| 01 | Delta lake |
+| 02 | Batch ingestion |
 | 03 | Stream ingestion |
 | 04 | Autoloader ingestion |
 | 05 | SQL endpoints |
