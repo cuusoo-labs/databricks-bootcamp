@@ -1,6 +1,6 @@
 # Databricks notebook source
 # MAGIC %scala
-# MAGIC spark.conf.set("com.databricks.training.module_name", "Sensor_IoT")
+# MAGIC spark.conf.set("com.databricks.training.module_name", "Bootcamp")
 # MAGIC val dbNamePrefix = {
 # MAGIC   val tags = com.databricks.logging.AttributionContext.current.tags
 # MAGIC   val name = tags.getOrElse(com.databricks.logging.BaseTagDefinitions.TAG_USER, java.util.UUID.randomUUID.toString.replace("-", ""))

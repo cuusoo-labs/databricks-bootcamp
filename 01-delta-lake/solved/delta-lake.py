@@ -1,44 +1,27 @@
 # Databricks notebook source
 # MAGIC %md
+# MAGIC ### ![Delta Lake Tiny Logo](https://pages.databricks.com/rs/094-YMS-629/images/delta-lake-tiny-logo.png) Delta Architecture
 # MAGIC 
-# MAGIC # ACID Transactions with Delta Lake (IoT Data)
+# MAGIC <img src="https://delta.io/wp-content/uploads/2019/04/Delta-Lake-marketecture-0423c.png" width=1012/>
 # MAGIC 
-# MAGIC <img src="https://pages.databricks.com/rs/094-YMS-629/images/delta-lake-logo-whitebackground.png" width=200/>
 # MAGIC 
-# MAGIC This is a companion notebook to provide a Delta Lake example against the IoT data.
+# MAGIC <img src="https://drive.google.com/uc?export=download&id=1cZJCR5Z_9VDG05u0VfKplDjk7k5r6Y7I" width=1012/>
 
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC #### Setup
+# MAGIC ### Set up the required files paths and user database
 
 # COMMAND ----------
 
-setup_responses = dbutils.notebook.run("./Utils/Setup-Batch-GDrive", 0).split()
+# MAGIC %run "../../includes/main-include"
 
-dbfs_data_path = setup_responses[1]
-database_name = setup_responses[2]
-bronze_table_path = f"{dbfs_data_path}tables/bronze"
-silver_table_path = f"{dbfs_data_path}tables/silver"
-silver_clone_table_path = f"{dbfs_data_path}tables/silver_clone"
-silver_sh_clone_table_path = f"{dbfs_data_path}tables/silver_clone_shallow"
-silver_constraints_table_path = f"{dbfs_data_path}tables/silver_constraints"
-gold_table_path = f"{dbfs_data_path}tables/gold"
-gold_agg_table_path = f"{dbfs_data_path}tables/goldagg"
-parquet_table_path = f"{dbfs_data_path}tables/parquet"
-autoloader_ingest_path = f"{dbfs_data_path}/autoloader_ingest/"
-dbutils.fs.rm(bronze_table_path, recurse=True)
-dbutils.fs.rm(silver_table_path, recurse=True)
-dbutils.fs.rm(gold_table_path, recurse=True)
-dbutils.fs.rm(parquet_table_path, recurse=True)
-dbutils.fs.rm(silver_clone_table_path, recurse=True)
+# COMMAND ----------
 
-print("DBFS path is {}".format(dbfs_data_path))
-print("Database name is {}".format(database_name))
-print("Brone Table Location is {}".format(bronze_table_path))
-print("Silver Table Location is {}".format(silver_table_path))
-print("Gold Table Location is {}".format(gold_table_path))
-print("Parquet Table Location is {}".format(parquet_table_path))
+# MAGIC %md
+# MAGIC ### Creating a delta table is easy!
+# MAGIC 
+# MAGIC <img src="https://databricks.com/wp-content/uploads/2020/02/simplysaydelta.png" width=800/>
 
 # COMMAND ----------
 
@@ -93,15 +76,11 @@ df.createOrReplaceTempView("bronze_readings_view")
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC ## ![Delta Lake Tiny Logo](https://pages.databricks.com/rs/094-YMS-629/images/delta-lake-tiny-logo.png) Delta Architecture
-# MAGIC 
-# MAGIC <img src="https://delta.io/wp-content/uploads/2019/04/Delta-Lake-marketecture-0423c.png" width=1012/>
+
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC <img src="https://drive.google.com/uc?export=download&id=1cZJCR5Z_9VDG05u0VfKplDjk7k5r6Y7I" width=1012/>
+
 
 # COMMAND ----------
 
@@ -115,8 +94,7 @@ df.createOrReplaceTempView("bronze_readings_view")
 
 # COMMAND ----------
 
-# MAGIC %md
-# MAGIC <img src="https://databricks.com/wp-content/uploads/2020/02/simplysaydelta.png" width=800/>
+
 
 # COMMAND ----------
 
