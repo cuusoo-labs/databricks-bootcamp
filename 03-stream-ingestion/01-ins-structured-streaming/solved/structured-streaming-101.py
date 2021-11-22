@@ -105,8 +105,10 @@ streamingDF = (spark
   .readStream
   .format("json")
   .schema(schema)
-  .option("maxFilesPerTrigger", 1)     # Optional; force processing of only 1 file per trigger 
+  .option("maxFilesPerTrigger", 1) 
   .load(dataPath)
+  .select((col("Creation_Time")/1E9).alias("time").cast("timestamp"),
+        col("gt").alias("action"))
 )
 
 # COMMAND ----------
@@ -237,13 +239,151 @@ streamingQuery = (streamingDF
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC The code below stops the `streamingQuery` defined above and introduces `awaitTermination()`
 # MAGIC 
-# MAGIC `awaitTermination()` will block the current thread
-# MAGIC * Until the stream stops or
-# MAGIC * Until the specified timeout elapses
+# MAGIC ## Streaming Aggregations
+# MAGIC 
+# MAGIC Continuous applications often require near real-time decisions on real-time, aggregated statistics.
+# MAGIC 
+# MAGIC Some examples include
+# MAGIC * Aggregating errors in data from IoT devices by type
+# MAGIC * Detecting anomalous behavior in a server's log file by aggregating by country.
+# MAGIC * Doing behavior analysis on instant messages via hash tags.
+# MAGIC 
+# MAGIC While these streaming aggregates may need to reference historic trends, generally analytics will be calculated over discrete units of time. Spark Structured Streaming supports time-based **windows** on streaming DataFrames to make these calculations easy.
 
 # COMMAND ----------
 
-streamingQuery.awaitTermination(5)      # Stream for another 5 seconds while the current thread blocks
-streamingQuery.stop()                   # Stop the stream
+# MAGIC %md
+# MAGIC 
+# MAGIC ## What is Time?
+# MAGIC 
+# MAGIC Multiple times may be associated with each streaming event. Consider the discrete differences between the time at which the event data was:
+# MAGIC - Generated
+# MAGIC - Written to the streaming source
+# MAGIC - Processed into Spark
+# MAGIC 
+# MAGIC Each of these times will be recorded from the system clock of the machine running the process. Discrepancies and latencies may have many different causes. 
+# MAGIC 
+# MAGIC Generally speaking, most analytics will be interested in the time the data was generated. As such, this lesson will focus on timestamps recorded at the time of data generation, here referred to as the **event time**.
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ## Windowing
+# MAGIC 
+# MAGIC Defining windows on a time series field allows users to utilize this field for aggregations in the same way they would use distinct values when calling `GROUP BY`. The state table will maintain aggregates for each user-defined bucket of time. Spark supports two types of windows:
+# MAGIC 
+# MAGIC **Tumbling Windows**
+# MAGIC 
+# MAGIC Windows do not overlap, but rather represent distinct buckets of time. Each event will be aggregated into only one window. 
+# MAGIC 
+# MAGIC **Sliding windows** 
+# MAGIC 
+# MAGIC The windows overlap and a single event may be aggregated into multiple windows. 
+# MAGIC 
+# MAGIC The diagram below from the <a href="https://spark.apache.org/docs/latest/structured-streaming-programming-guide.html" target="_blank">Structured Streaming Programming Guide</a> guide shows sliding windows.
+# MAGIC <img src="http://spark.apache.org/docs/latest/img/structured-streaming-window.png">
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Define a Windowed Aggregation
+# MAGIC 
+# MAGIC The method `window` accepts a timestamp column and a window duration to define tumbling windows. Adding a third argument for `slideDuration` allows definition of a sliding window; see [documentation](http://spark.apache.org/docs/latest/api/python/pyspark.sql.html?highlight=window#pyspark.sql.functions.window) for more details.
+# MAGIC 
+# MAGIC Here, the count of actions for each hour is aggregated.
+
+# COMMAND ----------
+
+from pyspark.sql.functions import window, col
+
+countsDF = (streamingDF
+  .groupBy(col("action"),                     
+           window(col("time"), "1 hour"))    
+  .count()                                    
+  .select(col("window.start").alias("start"), 
+          col("action"),                     
+          col("count"))                      
+  .orderBy(col("start"), col("action"))      
+)
+
+# COMMAND ----------
+
+display(countsDF)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Stop all Streams
+# MAGIC 
+# MAGIC When you are done, stop all the streaming jobs.
+
+# COMMAND ----------
+
+for s in spark.streams.active: # Iterate over all active streams
+  s.stop()                     # Stop the stream
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ## Watermarking
+# MAGIC 
+# MAGIC By default, Structured Streaming keeps around only the minimal intermediate state required to update the results table. When aggregating with many buckets over a long running stream, this can lead to slowdown and eventually OOM errors as the number of buckets calculated with each trigger grows.
+# MAGIC 
+# MAGIC **Watermarking** allows users to define a cutoff threshold for how much state should be maintained. This cutoff is calculated against the max event time seen by the engine (i.e., the most recent event). Late arriving data outside of this threshold will be discarded.
+# MAGIC 
+# MAGIC ![watermarking](https://spark.apache.org/docs/latest/img/structured-streaming-watermark-update-mode.png)
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC 
+# MAGIC ### Run a Stream with Watermarking
+# MAGIC 
+# MAGIC The `withWatermark` option allows users to easily define this cutoff threshold.
+
+# COMMAND ----------
+
+watermarkedDF = (streamingDF
+  .withWatermark("time", "2 hours")           # Specify a 2-hour watermark
+  .groupBy(col("action"),                     # Aggregate by action...
+           window(col("time"), "1 hour"))     # ...then by a 1 hour window
+  .count()                                    # For each aggregate, produce a count
+  .select(col("window.start").alias("start"), # Elevate field to column
+          col("action"),                      # Include count
+          col("count"))                       # Include action
+  .orderBy(col("start"), col("action"))       # Sort by the start time
+)
+display(watermarkedDF)                        # Start the stream and display it
+
+# COMMAND ----------
+
+# MAGIC %md-sandbox
+# MAGIC 
+# MAGIC ### Example Details
+# MAGIC 
+# MAGIC The threshold is always calculated against the max event time seen.
+# MAGIC 
+# MAGIC In the example above,
+# MAGIC * The in-memory state is limited to two hours of historic data.
+# MAGIC * Data arriving more than 2 hours late should be dropped.
+# MAGIC * Data received within 2 hours of being generated will never be dropped.
+# MAGIC 
+# MAGIC <img alt="Caution" title="Caution" style="vertical-align: text-bottom; position: relative; height:1.3em; top:0.0em" src="https://files.training.databricks.com/static/images/icon-warning.svg"/> This guarantee is strict in only one direction. Data delayed by more than 2 hours is not guaranteed to be dropped; it may or may not get aggregated. The more delayed the data is, the less likely the engine is going to process it.
+
+# COMMAND ----------
+
+for s in spark.streams.active: # Iterate over all active streams
+  s.stop()                     # Stop the stream
+
+# COMMAND ----------
+
+# MAGIC %md-sandbox
+# MAGIC &copy; 2021 Databricks, Inc. All rights reserved.<br/>
+# MAGIC Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href="http://www.apache.org/">Apache Software Foundation</a>.<br/>
+# MAGIC <br/>
+# MAGIC <a href="https://databricks.com/privacy-policy">Privacy Policy</a> | <a href="https://databricks.com/terms-of-use">Terms of Use</a> | <a href="http://help.databricks.com/">Support</a>
