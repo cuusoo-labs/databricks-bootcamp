@@ -31,10 +31,9 @@ display(spark.read.text("dbfs:/databricks-datasets/retail-org/README.md"))
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC CREATE OR REPLACE TEMPORARY VIEW vw_Product_Bronze
-# MAGIC USING csv
-# MAGIC OPTIONS (path='dbfs:/databricks-datasets/retail-org/products/', delimiter';', header='true')
+# TODO
+# Import the products folder into a temporary view called vw_Product_Bronze
+# The delimiter is a ; and the first row has the column headers
 
 # COMMAND ----------
 
@@ -43,7 +42,9 @@ display(spark.read.text("dbfs:/databricks-datasets/retail-org/README.md"))
 
 # COMMAND ----------
 
-spark.sql(f"CREATE TABLE IF NOT EXISTS Product_Bronze USING DELTA LOCATION '{bronze_table_path}/Product' AS SELECT * FROM vw_Product_Bronze")
+# TODO
+# Using the vw_Product_Bronze view as a source, create a delta table called Product_Bronze
+# The file location is a combination of the variable "bronze_table_path" with a suffix of "/Product"
 
 # COMMAND ----------
 
@@ -53,8 +54,8 @@ spark.sql(f"CREATE TABLE IF NOT EXISTS Product_Bronze USING DELTA LOCATION '{bro
 # COMMAND ----------
 
 # DBTITLE 1,Check for a sample set of data
-# MAGIC %sql
-# MAGIC SELECT * FROM Sales_Order_Bronze LIMIT 5;
+# TODO
+# Display the first 5 records from the Sales_Order_Bronze table
 
 # COMMAND ----------
 
@@ -130,13 +131,8 @@ spark.sql(f"CREATE TABLE IF NOT EXISTS Sales_Order_Line_Item_Silver USING DELTA 
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC UPDATE
-# MAGIC   Sales_Order_Line_Item_Silver
-# MAGIC SET
-# MAGIC   OrderDateTime = '1900-01-01'
-# MAGIC WHERE
-# MAGIC   OrderDateTime IS NULL
+# TODO
+# Update the "OrderDateTime" column all records in the Sales_Order_Line_Item_Silver table where "OrderDateTime" is empty
 
 # COMMAND ----------
 
@@ -145,8 +141,8 @@ spark.sql(f"CREATE TABLE IF NOT EXISTS Sales_Order_Line_Item_Silver USING DELTA 
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC DESCRIBE HISTORY Sales_Order_Line_Item_Silver;
+# TODO
+# Display the Delta logs for the Sales_Order_Line_Item_Silver table
 
 # COMMAND ----------
 
@@ -155,20 +151,14 @@ spark.sql(f"CREATE TABLE IF NOT EXISTS Sales_Order_Line_Item_Silver USING DELTA 
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT CustomerID,ProductID,OrderDateTime,LineNo, COUNT(*) FROM Sales_Order_Line_Item_Silver
-# MAGIC GROUP BY CustomerID,ProductID,OrderDateTime,LineNo
-# MAGIC HAVING COUNT(*) > 1
+# TODO
+# Write a query to determine the duplicate records in the Sales_Order_Line_Item_Silver table
+# The key columns are: CustomerID,ProductID,OrderDateTime,LineNo
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC DELETE FROM 
-# MAGIC   Sales_Order_Line_Item_Silver
-# MAGIC WHERE 
-# MAGIC   (CustomerID = 18558459 AND ProductID = 'AVpiHEE31cnluZ0-J8jJ' AND OrderDateTime = '1900-01-01' AND LineNo = 2)
-# MAGIC   OR
-# MAGIC   (CustomerID = 15424995 AND ProductID = 'AVpjedgc1cnluZ0-W4NI' AND OrderDateTime = '1900-01-01' AND LineNo = 3)
+# TODO
+# Delete all duplicate records in the Sales_Order_Line_Item_Silver table
 
 # COMMAND ----------
 
@@ -214,7 +204,7 @@ spark.sql(f"CREATE TABLE IF NOT EXISTS Sales_Order_Line_Item_Silver USING DELTA 
 # MAGIC   FROM
 # MAGIC     (SELECT
 # MAGIC       *
-# MAGIC       ,ROW_NUMBER() OVER(PARTITION BY CustomerID,ProductID,OrderDateTime,LineNo ORDER BY OrderDateTime) AS RowID
+# MAGIC       ,-- TODO - Write the windowing function logic to calculate a RowID for each row, given the key columns in the MERGE join logic
 # MAGIC      FROM
 # MAGIC        vw_Sales_Order_Line_Item_Bronze
 # MAGIC     ) AS Source
@@ -250,8 +240,8 @@ spark.sql(f"CREATE TABLE IF NOT EXISTS Sales_Order_Line_Item_Silver USING DELTA 
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC SELECT COUNT(*) FROM Sales_Order_Line_Item_Silver VERSION AS OF 0
+# TODO
+# Write a query to check the number of records for version 0 in the Sales_Order_Line_Item_Silver table
 
 # COMMAND ----------
 
@@ -297,7 +287,8 @@ spark.sql(f"CREATE TABLE IF NOT EXISTS Sales_Order_Line_Item_Silver_Shallow_Clon
 
 # COMMAND ----------
 
-dbutils.fs.ls(f'{silver_sh_clone_table_path}')
+# TODO
+# List the content of the folder contained in the variable "silver_sh_clone_table_path"
 
 # COMMAND ----------
 
@@ -307,9 +298,10 @@ dbutils.fs.ls(f'{silver_sh_clone_table_path}')
 
 # COMMAND ----------
 
-# Add a new column to calculate the Unit price
-tmp_df = spark.sql("SELECT *, Price / Quantity AS UnitPrice FROM Sales_Order_Line_Item_Silver")
-display(tmp_df)
+# TODO
+# Add a new calculated column to the "Sales_Order_Line_Item_Silver" table called "UnitPrice", which is Price divided by Quantity
+# Store the result in a dataframe called "tmp_df"
+# Display the contents of the "tmp_df" dataframe
 
 # COMMAND ----------
 
@@ -362,8 +354,9 @@ tmp_df.write.option("mergeSchema","true").format("delta").mode("overwrite").save
 
 # COMMAND ----------
 
-spark.sql(f"CREATE TABLE IF NOT EXISTS Customer_Gold USING DELTA LOCATION '{gold_table_path}/Customer' AS SELECT * FROM Customer_Silver")
-spark.sql(f"CREATE TABLE IF NOT EXISTS Product_Gold USING DELTA LOCATION '{gold_table_path}/Product' AS SELECT * FROM Product_Silver")
+# TODO
+# Create 2 gold delta tables, "Customer_Gold" and "Product_Gold", using the "Customer_Silver" and "Product_Silver" tables respectively
+# Store the delta files in the "{gold_table_path}/Customer" and ""{gold_table_path}/Product" directories respectively
 
 # COMMAND ----------
 
@@ -427,6 +420,10 @@ spark.conf.set("spark.sql.legacy.timeParserPolicy", "LEGACY")
 
 # COMMAND ----------
 
+# TODO
+# Create a delta table called "Sales_Order_Gold_Agg", stored in the folder location contained in variable "gold_agg_table_path" and using the "Sales_Order_Line_Item_Gold_View" temporary view as a source
+# The query should group by ProductCategory, ProductName, CustomerName, OrderDateTime formatted to "yyyy-MM" and called YearMonth
+# Sum the Quantity and OrderAmount columns
 spark.sql(f"""
 CREATE TABLE IF NOT EXISTS Sales_Order_Gold_Agg USING DELTA LOCATION '{gold_agg_table_path}' 
 AS 

@@ -173,30 +173,30 @@ download_file_from_google_drive("1eMB5wy1wa9hh1qgk_pEwvOICn367UdfJ", local_file_
 
 # COMMAND ----------
 
-dataPath1 = f"{base_table_path}/plant_data.csv"
+# dataPath1 = f"{base_table_path}/plant_data.csv"
 
-df1 = spark.read\
-  .option("header", "true")\
-  .option("delimiter", ",")\
-  .option("inferSchema", "true")\
-  .csv(dataPath1)
+# df1 = spark.read\
+#   .option("header", "true")\
+#   .option("delimiter", ",")\
+#   .option("inferSchema", "true")\
+#   .csv(dataPath1)
 
-display(df1)
-
-# COMMAND ----------
-
-df1.createOrReplaceTempView("plant_vw")
+# display(df1)
 
 # COMMAND ----------
 
-# MAGIC %sql
-# MAGIC DROP TABLE IF EXISTS dim_plant;
-# MAGIC 
-# MAGIC CREATE TABLE dim_plant 
-# MAGIC USING DELTA
-# MAGIC AS (
-# MAGIC   SELECT * FROM plant_vw
-# MAGIC )
+# df1.createOrReplaceTempView("plant_vw")
+
+# COMMAND ----------
+
+# %sql
+# DROP TABLE IF EXISTS dim_plant;
+
+# CREATE TABLE dim_plant 
+# USING DELTA
+# AS (
+#   SELECT * FROM plant_vw
+# )
 
 # COMMAND ----------
 

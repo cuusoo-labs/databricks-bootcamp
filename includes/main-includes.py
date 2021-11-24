@@ -20,7 +20,7 @@ dbutils.fs.rm(silver_clone_table_path, recurse=True)
 
 print("DBFS path is {}".format(dbfs_data_path))
 print("Database name is {}".format(database_name))
-print("Brone Table Location is {}".format(bronze_table_path))
+print("Bronze Table Location is {}".format(bronze_table_path))
 print("Silver Table Location is {}".format(silver_table_path))
 print("Gold Table Location is {}".format(gold_table_path))
 print("Parquet Table Location is {}".format(parquet_table_path))
