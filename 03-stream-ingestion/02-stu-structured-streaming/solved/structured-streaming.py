@@ -6,7 +6,6 @@
 
 # COMMAND ----------
 
-setup_responses = dbutils.notebook.run("../../../includes/Setup-Batch-GDrive", 0).split()
 setup_responses = dbutils.notebook.run("../../../includes/Setup-Streaming-GDrive", 0).split()
 
 checkpoint_stream1_path = setup_responses[0]
