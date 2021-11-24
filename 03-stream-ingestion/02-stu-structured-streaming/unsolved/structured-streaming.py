@@ -128,15 +128,7 @@ background_insert_rows.start()
 
 # COMMAND ----------
 
-dataPath = f"{dbfs_data_path}/sensor_readings_current_labeled.csv"
-
-df = (spark.read
-  .option("header", "true")
-  .option("delimiter", ",")
-  .option("inferSchema", "true")
-  .csv(dataPath))
-
-display(df)
+# YOUR CODE HERE
 
 # COMMAND ----------
 
@@ -151,13 +143,7 @@ display(df)
 
 # COMMAND ----------
 
-streaming_df = (
-  spark.readStream
-  .format("delta")
-  .load(streaming_table_path)
-)
-
-display(streaming_df)
+# YOUR CODE HERE
 
 # COMMAND ----------
 
@@ -174,16 +160,7 @@ display(streaming_df)
 
 # COMMAND ----------
 
-from pyspark.sql.functions import avg, col 
-streaming_agg_df = (
-  spark
-  .readStream
-  .format("delta")
-  .load(streaming_table_path)
-  .groupBy(col("device_type"), col("device_operational_status"))
-  .avg("reading_1")
-)
-display(streaming_agg_df)
+# YOUR CODE HERE
 
 # COMMAND ----------
 
@@ -201,19 +178,7 @@ display(streaming_agg_df)
 
 from pyspark.sql.functions import avg, col, window
 
-streamingWindowDF = (
-  spark
-  .readStream
-  .format("delta")
-  .load(streaming_table_path)
-  .groupBy(
-    col("device_type"), 
-    col("device_operational_status"),
-    window(col("reading_time"), "1 minute")
-  )
-  .avg("reading_1")
-)
-display(streamingWindowDF)
+# YOUR CODE HERE
 
 # COMMAND ----------
 
@@ -231,20 +196,7 @@ display(streamingWindowDF)
 
 from pyspark.sql.functions import avg, col, window
 
-streamingWindowWatermarkDF = (
-  spark
-  .readStream
-  .format("delta")
-  .load(streaming_table_path)
-  .withWatermark("reading_time", "2 hours")
-  .groupBy(
-    col("device_type"), 
-    col("device_operational_status"),
-    window(col("reading_time"), "1 minute")
-  )
-  .avg("reading_1")
-)
-display(streamingWindowWatermarkDF)
+# YOUR CODE HERE
 
 # COMMAND ----------
 
@@ -268,13 +220,7 @@ dbutils.fs.rm(output_sink_path, True)
 
 # COMMAND ----------
 
-streaming_query = (streamingWindowWatermarkDF                                
-  .writeStream                                                
-  .format("delta")                                          
-  .option("checkpointLocation", checkpoint_stream1_path)               
-  .outputMode("append")
-  .start(output_sink_path)                                       
-)
+# YOUR CODE HERE
 
 # COMMAND ----------
 

@@ -7,7 +7,11 @@
 
 # COMMAND ----------
 
-# MAGIC %run ../../includes/classic-setup $mode="reset"
+# MAGIC %run ../../../includes/classic-setup $mode="reset"
+
+# COMMAND ----------
+
+dbutils.fs.ls("/mnt/training/definitive-guide/data/activity-json/streaming")
 
 # COMMAND ----------
 
@@ -91,6 +95,8 @@ schema = "Arrival_Time BIGINT, Creation_Time BIGINT, Device STRING, Index BIGINT
 # MAGIC <img alt="Side Note" title="Side Note" style="vertical-align: text-bottom; position: relative; height:1.75em; top:0.05em; transform:rotate(15deg)" src="https://files.training.databricks.com/static/images/icon-note.webp"/> While `maxFilesPerTrigger` will be used throughout the material in this course to limit how quickly source files are consumed, this is optional and for demonstration purposes. This option allows control over how much data will be processed in each micro-batch.
 
 # COMMAND ----------
+
+from pyspark.sql.functions import col
 
 dataPath = "/mnt/training/definitive-guide/data/activity-json/streaming"
 

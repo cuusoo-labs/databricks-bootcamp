@@ -7,7 +7,7 @@
 
 # COMMAND ----------
 
-# MAGIC %run ../../includes/classic-setup $mode="reset"
+# MAGIC %run ../../../includes/classic-setup $mode="reset"
 
 # COMMAND ----------
 
@@ -92,32 +92,7 @@ schema = "Arrival_Time BIGINT, Creation_Time BIGINT, Device STRING, Index BIGINT
 
 # COMMAND ----------
 
-dataPath = "/mnt/training/definitive-guide/data/activity-json/streaming"
 
-staticDF = (spark
-  .read
-  .format("json")
-  .schema(schema)
-  .load(dataPath)
-)
-
-# streamingDF = (spark
-#   .readStream
-#   .format("json")
-#   .schema(schema)
-#   .option("maxFilesPerTrigger", 1)     # Optional; force processing of only 1 file per trigger 
-#   .load(dataPath)
-# )
-
-streamingDF = (spark
-  .readStream
-  .format("json")
-  .schema(schema)
-  .option("maxFilesPerTrigger", 1) 
-  .load(dataPath)
-  .select((col("Creation_Time")/1E9).alias("time").cast("timestamp"),
-        col("gt").alias("action"))
-)
 
 # COMMAND ----------
 
@@ -179,15 +154,7 @@ streamingDF = (spark
 
 # COMMAND ----------
 
-outputPath = userhome + "/static-write"
 
-dbutils.fs.rm(outputPath, True)    # clear this directory in case lesson has been run previously
-
-(staticDF                                
-  .write                                               
-  .format("delta")                                          
-  .mode("append")                                       
-  .save(outputPath))
 
 # COMMAND ----------
 
@@ -204,19 +171,7 @@ dbutils.fs.rm(outputPath, True)    # clear this directory in case lesson has bee
 
 # COMMAND ----------
 
-outputPath = userhome + "/streaming-concepts"
-checkpointPath = outputPath + "/checkpoint"
 
-dbutils.fs.rm(outputPath, True)    # clear this directory in case lesson has been run previously
-
-streamingQuery = (streamingDF                                
-  .writeStream                                                
-  .format("delta")                                          
-  .option("checkpointLocation", checkpointPath)               
-  .outputMode("append")
-#   .queryName("my_stream")        # optional argument to register stream to Spark catalog
-  .start(outputPath)                                       
-)
 
 # COMMAND ----------
 
@@ -305,17 +260,7 @@ streamingQuery = (streamingDF
 
 # COMMAND ----------
 
-from pyspark.sql.functions import window, col
 
-countsDF = (streamingDF
-  .groupBy(col("action"),                     
-           window(col("time"), "1 hour"))    
-  .count()                                    
-  .select(col("window.start").alias("start"), 
-          col("action"),                     
-          col("count"))                      
-  .orderBy(col("start"), col("action"))      
-)
 
 # COMMAND ----------
 
@@ -356,17 +301,7 @@ for s in spark.streams.active: # Iterate over all active streams
 
 # COMMAND ----------
 
-watermarkedDF = (streamingDF
-  .withWatermark("time", "2 hours")           # Specify a 2-hour watermark
-  .groupBy(col("action"),                     # Aggregate by action...
-           window(col("time"), "1 hour"))     # ...then by a 1 hour window
-  .count()                                    # For each aggregate, produce a count
-  .select(col("window.start").alias("start"), # Elevate field to column
-          col("action"),                      # Include count
-          col("count"))                       # Include action
-  .orderBy(col("start"), col("action"))       # Sort by the start time
-)
-display(watermarkedDF)                        # Start the stream and display it
+
 
 # COMMAND ----------
 
