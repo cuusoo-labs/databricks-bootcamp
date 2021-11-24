@@ -16,9 +16,8 @@ The bootcamp aims to provide participants with:
 | 02 | Batch ingestion |
 | 03 | Stream ingestion |
 | 04 | Autoloader ingestion |
-| 05 | SQL endpoints |
-| 06 | Machine learning | 
-| 07 | ML flow |
+| 05 | Databricks SQL |
+| 06 | Machine learning and MLflow | 
 
 
 # Content structure
@@ -33,4 +32,3 @@ Within each activity folder, there will be sub-folders for:
 
 - `unsolved`: contains the unsolved starter code. Students should refer to the Python comments for instructions for the activity.
 - `solved` : contains the solved solutions. `stu` activities will not contain the solved solutions until the end of the day.
-- `resources`: contains datasets used for the activity. 
