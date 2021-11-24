@@ -1,6 +1,8 @@
 # Databricks Bootcamp
 
-The bootcamp aims to provide participants with: 
+This bootcamp has been prepared in collaboration between [Cuusoo](https://www.cuusoo.com.au/) and [Databricks](https://databricks.com/). 
+
+The bootcamp aims to provide participants with:
 
 - Ability to perform data engineering tasks with Databricks, including batch and stream ingestion. 
 - Deep understanding of the delta lake file format in relation to the data lakehouse architecture.  
