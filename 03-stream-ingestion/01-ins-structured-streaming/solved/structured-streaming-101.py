@@ -70,6 +70,7 @@ dbutils.fs.ls("/mnt/training/definitive-guide/data/activity-json/streaming")
 # MAGIC * Configurations specific to the source:
 # MAGIC   * [Kafka](https://docs.databricks.com/spark/latest/structured-streaming/kafka.html)
 # MAGIC   * [Kinesis](https://docs.databricks.com/spark/latest/structured-streaming/kinesis.html)
+# MAGIC   * [Event Hub](https://docs.databricks.com/spark/latest/structured-streaming/streaming-event-hubs.html)
 
 # COMMAND ----------
 
@@ -116,6 +117,15 @@ streamingDF = (spark
   .select((col("Creation_Time")/1E9).alias("time").cast("timestamp"),
         col("gt").alias("action"))
 )
+
+# COMMAND ----------
+
+display(staticDF)
+
+
+# COMMAND ----------
+
+display(streamingDF)
 
 # COMMAND ----------
 
